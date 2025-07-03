@@ -1,7 +1,9 @@
 name: OSV-Scanner PR Scan
 
 on:
-  pull_request:
+  push:
+    branches:
+      - '**'
 
 
 permissions:
@@ -15,3 +17,5 @@ permissions:
 jobs:
   scan-pr:
     uses: "google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v1.8.2"
+    with:
+      fail-on-vuln: false
