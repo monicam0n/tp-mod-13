@@ -1,7 +1,9 @@
 name: OSV-Scanner PR Scan
 
 on:
-  pull_request:
+  push:
+    branches:
+      - '**'
 
 
 permissions:
