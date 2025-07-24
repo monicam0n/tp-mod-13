@@ -1,37 +1,35 @@
-name: Semgrep PR Scan
+name: Semgrep
 
 on:
   pull_request: {}
-
+  
 jobs:
-  semgrep_diff_scan:
-    name: semgrep/pr-diff
+  semgrep_scan:
+    name: semgrep/ci
     runs-on: ubuntu-latest
     container:
       image: returntocorp/semgrep
-    if: github.actor != 'dependabot[bot]'
+    if: (github.actor != 'dependabot[bot]')
     permissions:
       security-events: write
       actions: read
       contents: read
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
 
-      - name: Run Semgrep on PR diff
-        run: semgrep --sarif --output=semgrep-results.sarif --diff-coverage=origin/${{ github.base_ref }}
+      - name: Perform Semgrep Analysis
+        run: semgrep scan -q --sarif --config auto . > semgrep-results.sarif
 
       - name: Save SARIF results as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: semgrep-pr-results
+          name: semgrep-scan-results
           path: semgrep-results.sarif
 
-      - name: Upload SARIF to GitHub Security Dashboard
-        uses: github/codeql-action/upload-sarif@v3
+      - name: Upload SARIF result to the GitHub Security Dashboard
+        uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: semgrep-results.sarif
         if: always()
