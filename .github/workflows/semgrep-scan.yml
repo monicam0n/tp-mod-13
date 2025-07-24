@@ -1,4 +1,4 @@
-name: Semgrep PR Scan 
+name: Semgrep PR Scan
 
 on:
   pull_request: {}
@@ -20,6 +20,9 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Run Semgrep on PR diff
+        run: semgrep --sarif --output=semgrep-results.sarif --diff-coverage=origin/${{ github.base_ref }}
 
       - name: Save SARIF results as artifact
         uses: actions/upload-artifact@v4
