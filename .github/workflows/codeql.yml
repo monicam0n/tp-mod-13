@@ -39,6 +39,9 @@ jobs:
         with:
           name: codeql-pr-results
           path: codeql-results.sarif
+          
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
       
       - name: Summarize CodeQL Findings in PR
         if: always()
