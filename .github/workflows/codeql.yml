@@ -31,6 +31,8 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          output: codeql-results.sarif
         
       - name: Summarize CodeQL Findings in PR
         if: always()
