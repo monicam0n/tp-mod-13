@@ -31,3 +31,22 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        
+      - name: Summarize CodeQL Findings in PR
+        if: always()
+        run: |
+          if [[ -s codeql-results.sarif ]]; then
+          {
+            echo "### 🔍 CodeQL Findings"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '| Rule ID | Message | File | Line |'
+            echo '|---------|---------|------|------|'
+            jq -r '
+              .runs[].results[] |
+              "| \(.ruleId) | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri) | \(.locations[0].physicalLocation.region.startLine) |"
+            ' codeql-results.sarif
+            echo ""
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+          fi
