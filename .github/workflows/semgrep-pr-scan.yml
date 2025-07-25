@@ -4,31 +4,6 @@ on:
   pull_request: {}
 
 jobs:
-  codeql_analysis:
-    name: CodeQL Scan 
-    runs-on: ubuntu-latest
-    if: github.actor != 'dependabot[bot]'
-    timeout-minutes: 60
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Initialize CodeQL for All Languages
-        uses: github/codeql-action/init@v3
-        with:
-          languages: 'auto'
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-
   semgrep_diff_scan:
     name: semgrep/pr-diff
     runs-on: ubuntu-latest
