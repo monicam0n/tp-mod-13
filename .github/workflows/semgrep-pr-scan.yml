@@ -33,8 +33,21 @@ jobs:
           name: semgrep-pr-results
           path: semgrep-results.sarif
 
-      - name: Upload SARIF to GitHub Security Dashboard
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: semgrep-results.sarif
-        if: always()
+      - name: Publish Semgrep SARIF Summary
+        run: |
+          if [[ -s semgrep-results.sarif ]]; then
+          {
+            echo "### 🧪 Semgrep Findings"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '| Rule ID | Message | File | Line |'
+            echo '|---------|---------|------|------|'
+            jq -r '
+              .runs[].results[] |
+              "| \(.ruleId) | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri) | \(.locations[0].physicalLocation.region.startLine) |"
+            ' semgrep-results.sarif
+            echo ""
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+          fi
+      
