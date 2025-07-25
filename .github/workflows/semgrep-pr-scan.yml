@@ -4,6 +4,60 @@ on:
   pull_request: {}
 
 jobs:
+  codeql_analysis:
+    name: CodeQL Scan
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
+    timeout-minutes: 60
+  
+    permissions:
+      contents: read
+      actions: read
+      security-events: write  # Masih diperlukan untuk generate SARIF
+  
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+  
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+  
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp, csharp, go, java, javascript, python, ruby, swift, php
+  
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+  
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+  
+      - name: Save CodeQL SARIF result
+        run: |
+          mkdir -p codeql-output
+          find /github/workspace -name '*.sarif' -exec cp {} codeql-output/codeql-results.sarif \; || true
+        if: always()
+  
+      - name: Publish CodeQL SARIF Summary
+        run: |
+          if [[ -s codeql-output/codeql-results.sarif ]]; then
+          {
+            echo "### 🛡️ CodeQL Findings"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '| Rule ID | Message | File | Line |'
+            echo '|---------|---------|------|------|'
+            jq -r '
+              .runs[].results[] |
+              "| \(.ruleId) | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri) | \(.locations[0].physicalLocation.region.startLine) |"
+            ' codeql-output/codeql-results.sarif
+            echo ""
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+          fi
+        if: always()
+          
   semgrep_diff_scan:
     name: semgrep/pr-diff
     runs-on: ubuntu-latest
