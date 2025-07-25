@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
       
       - name: Mark repo as safe for Git
-        run: git config --global --add safe.directory /__w/tp-mod-13/tp-mod-13
+        run: git config --global --add safe.directory $(pwd)
 
       - name: Run Semgrep
         run: semgrep --config auto --sarif --output semgrep-results.sarif
