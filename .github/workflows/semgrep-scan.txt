@@ -1,0 +1,41 @@
+# name: Semgrep
+
+# on:
+#   pull_request: {}
+  
+# jobs:
+#   semgrep_scan:
+#     name: semgrep/ci
+#     runs-on: ubuntu-latest
+#     container:
+#       image: returntocorp/semgrep
+#     if: (github.actor != 'dependabot[bot]')
+#     permissions:
+#       security-events: write
+#       actions: read
+#       contents: read
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v3
+
+#       - name: Mark repo as safe for Git
+#         run: git config --global --add safe.directory /__w/tp-mod-13/tp-mod-13
+
+#       - name: Run Semgrep
+#         run: semgrep --config auto --sarif --output semgrep-results.sarif
+
+#       - name: Perform Semgrep Analysis
+#         run: semgrep scan -q --sarif --config auto . > semgrep-results.sarif
+
+#       - name: Save SARIF results as artifact
+#         uses: actions/upload-artifact@v3
+#         with:
+#           name: semgrep-scan-results
+#           path: semgrep-results.sarif
+
+#       - name: Upload SARIF result to the GitHub Security Dashboard
+#         uses: github/codeql-action/upload-sarif@v3
+#         with:
+#           sarif_file: semgrep-results.sarif
+#         if: always()
