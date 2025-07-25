@@ -33,6 +33,12 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           output: codeql-results.sarif
+
+      - name: Save SARIF results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-pr-results
+          path: codeql-results.sarif
         
       - name: Summarize CodeQL Findings in PR
         if: always()
