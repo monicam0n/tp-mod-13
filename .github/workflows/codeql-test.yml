@@ -50,12 +50,12 @@ jobs:
     - name: Save SARIF results as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: codeql-results
-        path: codeql-results.sarif
+        name: codeql-results-1
+        path: codeql-results-1.sarif
         
-    - name: Publish Semgrep SARIF Summary
+    - name: Publish CodeQL SARIF Summary
       run: |
-          if [[ -s semgrep-results.sarif ]]; then
+          if [[ -s codeql-results-1.sarif ]]; then
           {
             echo "### 🧪 Semgrep Findings"
             echo "<details><summary>Click to expand</summary>"
@@ -65,7 +65,7 @@ jobs:
             jq -r '
               .runs[].results[] |
               "| \(.ruleId) | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri) | \(.locations[0].physicalLocation.region.startLine) |"
-            ' semgrep-results.sarif
+            ' codeql-results-1.sarif
             echo ""
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
