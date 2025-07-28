@@ -4,69 +4,59 @@ name: "CodeQL"
 on:
   pull_request: {}
 
-jobs:
-  codeql-scan:
-      name: Run CodeQL and show summary
+jobs:  
+  analyze:
+      name: CodeQL Analysis
       runs-on: ubuntu-latest
-  
       permissions:
-        security-events: write 
-        actions: read
-        contents: read
+        security-events: write
+  
+      strategy:
+        matrix:
+          language: [javascript]
   
       steps:
-        - name: Checkout code
+        - name: Checkout repository
           uses: actions/checkout@v4
   
         - name: Initialize CodeQL
           uses: github/codeql-action/init@v3
           with:
-            languages: javascript 
+            languages: ${{ matrix.language }}
   
-        - name: Autobuild
-          uses: github/codeql-action/autobuild@v3
-  
-        - name: Run CodeQL analysis
+        - name: Build code
+          run: |
+            # Replace this with your actual build steps if needed
+            echo "No build needed for this example."
+        - name: Perform CodeQL Analysis
           uses: github/codeql-action/analyze@v3
           with:
             output: codeql-results.sarif
-            upload: false  # tidak upload ke dashboard GitHub
   
-        - name: Generate SARIF summary
+        - name: Save SARIF results as artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: codeql-pr-results
+            path: codeql-results.sarif
+  
+        - name: Install jq
+          run: sudo apt-get update && sudo apt-get install -y jq
+  
+        - name: Summarize CodeQL Findings in PR
+          if: always()
           run: |
-            echo "## 🛡️ CodeQL Scan Results" >> $GITHUB_STEP_SUMMARY
-            # Cek jika file SARIF ada dan tidak kosong
-            if [ -s codeql-results.sarif ]; then
-              count=$(jq '.runs[].results | length' codeql-results.sarif)
-              if [ "$count" -eq 0 ]; then
-                echo "✅ No issues found!" >> $GITHUB_STEP_SUMMARY
-              else
-                echo "Found $count issues:" >> $GITHUB_STEP_SUMMARY
-                jq -r '
-                  .runs[].results[] |
-                  "- **\(.ruleId)**: \(.message.text)
-                    (File: \(.locations[0].physicalLocation.artifactLocation.uri),
-                     Line: \(.locations[0].physicalLocation.region.startLine))"
-                ' codeql-results.sarif >> $GITHUB_STEP_SUMMARY
-              fi
-            else
-              echo "⚠️ SARIF file not found or empty." >> $GITHUB_STEP_SUMMARY
+            if [[ -s codeql-results.sarif ]]; then
+            {
+              echo "### 🔍 CodeQL Findings"
+              echo "<details><summary>Click to expand</summary>"
+              echo ""
+              echo '| Rule ID | Message | File | Line |'
+              echo '|---------|---------|------|------|'
+              jq -r '
+                .runs[].results[]? |
+                "| \(.ruleId) | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri) | \(.locations[0].physicalLocation.region.startLine) |"
+              ' codeql-results.sarif || true
+              echo ""
+              echo "</details>"
+            } >> $GITHUB_STEP_SUMMARY
             fi
-
-        
-        # run: |
-        #   if [[ -s codeql-results.sarif ]]; then
-        #   {
-        #     echo "### 🔍 CodeQL Findings"
-        #     echo "<details><summary>Click to expand</summary>"
-        #     echo ""
-        #     echo '| Rule ID | Message | File | Line |'
-        #     echo '|---------|---------|------|------|'
-        #     jq -r '
-        #       .runs[].results[] |
-        #       "| \(.ruleId) | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri) | \(.locations[0].physicalLocation.region.startLine) |"
-        #     ' codeql-results.sarif
-        #     echo ""
-        #     echo "</details>"
-        #   } >> $GITHUB_STEP_SUMMARY
-        #   fi
