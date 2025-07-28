@@ -45,7 +45,7 @@ jobs:
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
-        output: codeql-results.sarif
+        output: codeql-results-1.sarif
         
     - name: Save SARIF results as artifact
       uses: actions/upload-artifact@v4
