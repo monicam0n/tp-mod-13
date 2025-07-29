@@ -89,7 +89,7 @@ jobs:
             [.runs[].results[] | select(($levels[.ruleId] // "unknown") == "warning")] | length
           ' semgrep-results.sarif)
 
-          echo "Found $error_count error-level findings."
+          echo "Found $warning_count warning-level findings."
           
           if [ "$critical_count" -gt 0 ] || [ "$error_count" -gt 0 ] || [ "$warning_count" -gt 0 ] ; then
             echo "❌ Failing pipeline due to error-level findings"
