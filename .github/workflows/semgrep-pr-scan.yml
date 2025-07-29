@@ -94,6 +94,6 @@ jobs:
           if [ "$critical_count" -gt 0 ] || [ "$error_count" -gt 0 ] || [ "$warning_count" -gt 0 ] ; then
             echo "❌ Failing pipeline due to error-level findings"
             exit 1
-          fi
+          fi 
 
 
