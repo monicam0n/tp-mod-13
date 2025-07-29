@@ -46,8 +46,8 @@ jobs:
               .runs[].results[] |
               "| \(.ruleId // "") | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri // "") | \(.locations[0].physicalLocation.region.startLine // "") | \(.level // "") |"
             ' semgrep-results.sarif
-            echo "\n"
-            echo .runs[].results[].level
+            echo ""
+            jq '.runs[].results[].level'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
           fi
