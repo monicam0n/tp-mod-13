@@ -56,4 +56,22 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
           fi
 
+      - name: Fail if any error-level findings exist
+        run: |
+          error_count=$(jq '
+            def rule_level_map:
+              (.runs[].tool.driver.rules // []) as $rules |
+              reduce $rules[] as $r ({}; . + {($r.id): ($r.defaultConfiguration.level // "unknown")} );
+
+            rule_level_map as $levels |
+            [.runs[].results[] | select(($levels[.ruleId] // "unknown") == "error")] | length
+          ' semgrep-results.sarif)
+
+          echo "❗ Found $error_count error-level findings."
+
+          if [ "$error_count" -gt 0 ]; then
+            echo "❌ Failing pipeline due to error-level findings"
+            exit 1
+          fi
+
 
