@@ -25,7 +25,7 @@ jobs:
         run: git config --global --add safe.directory $(pwd)
 
       - name: Run Semgrep
-        run: semgrep --config "p/default" --baseline-commit HEAD~ --sarif --output semgrep-results.sarif
+        run: semgrep --verbose --config "p/default" --baseline-commit HEAD~ --sarif --output semgrep-results.sarif
 
       - name: Save SARIF results as artifact
         uses: actions/upload-artifact@v4
