@@ -40,14 +40,18 @@ jobs:
             echo "### 🧪 Semgrep Findings"
             echo "<details><summary>Click to expand</summary>"
             echo ""
-            echo '| Rule ID | Message | File | Line | Level |'
-            echo '|---------|---------|------|------|-------|'
+            echo '| Rule ID | Message | File | Line | Severity |'
+            echo '|---------|---------|------|------|----------|'
             jq -r '
+              def rule_level_map:
+                (.runs[].tool.driver.rules // []) as $rules |
+                reduce $rules[] as $r ({}; . + {($r.id): ($r.defaultConfiguration.level // "unknown")} );
+      
+              rule_level_map as $levels |
               .runs[].results[] |
-              "| \(.ruleId // "") | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri // "") | \(.locations[0].physicalLocation.region.startLine // "") | \(.level // "") |"
+              "| \(.ruleId // "") | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri // "") | \(.locations[0].physicalLocation.region.startLine // "") | \($levels[.ruleId] // "unknown") |"
             ' semgrep-results.sarif
             echo ""
-            jq '.runs[].results[].level'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
           fi
