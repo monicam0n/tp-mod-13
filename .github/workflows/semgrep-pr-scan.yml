@@ -40,8 +40,8 @@ jobs:
             echo "### 🧪 Semgrep Findings"
             echo "<details><summary>Click to expand</summary>"
             echo ""
-            echo '| Rule ID | Message | File | Line | Severity |'
-            echo '|---------|---------|------|------|----------|'
+            echo '| Rule ID | Message | File | Line | Level |'
+            echo '|---------|---------|------|------|-------|'
             jq -r '
               def rule_level_map:
                 (.runs[].tool.driver.rules // []) as $rules |
