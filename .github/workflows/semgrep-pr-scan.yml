@@ -8,7 +8,7 @@ jobs:
     name: semgrep/pr-diff
     runs-on: ubuntu-latest
     container:
-      image: returntocorp/semgrep
+      image: semgrep/semgrep
     if: github.actor != 'dependabot[bot]'
     permissions:
       security-events: write
@@ -22,10 +22,10 @@ jobs:
           fetch-depth: 0
       
       - name: Mark repo as safe for Git
-        run: git config --global --add safe.directory /__w/tp-mod-13/tp-mod-13
+        run: git config --global --add safe.directory $(pwd)
 
       - name: Run Semgrep
-        run: semgrep --config auto --sarif --output semgrep-results.sarif
+        run: semgrep --verbose --config auto --sarif --output semgrep-results.sarif
 
       - name: Save SARIF results as artifact
         uses: actions/upload-artifact@v4
@@ -33,8 +33,20 @@ jobs:
           name: semgrep-pr-results
           path: semgrep-results.sarif
 
-      - name: Upload SARIF to GitHub Security Dashboard
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: semgrep-results.sarif
-        if: always()
+      - name: Publish Semgrep SARIF Summary
+        run: |
+          if [[ -s semgrep-results.sarif ]]; then
+          {
+            echo "### 🧪 Semgrep Findings"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '| Rule ID | Message | File | Line |'
+            echo '|---------|---------|------|------|'
+            jq -r '
+              .runs[].results[] |
+              "| \(.ruleId) | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri) | \(.locations[0].physicalLocation.region.startLine) |"
+            ' semgrep-results.sarif
+            echo ""
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+          fi
