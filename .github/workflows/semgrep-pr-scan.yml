@@ -25,7 +25,7 @@ jobs:
         run: git config --global --add safe.directory $(pwd)
 
       - name: Run Semgrep
-        run: semgrep --config auto --baseline-commit HEAD~ --sarif --output semgrep-results.sarif
+        run: semgrep semgrep --config "p/default" --baseline-commit HEAD~ --sarif --output semgrep-results.sarif
 
       - name: Save SARIF results as artifact
         uses: actions/upload-artifact@v4
@@ -40,13 +40,14 @@ jobs:
             echo "### 🧪 Semgrep Findings"
             echo "<details><summary>Click to expand</summary>"
             echo ""
-            echo '| Rule ID | Message | File | Line |'
-            echo '|---------|---------|------|------|'
+            echo '| Rule ID | Message | File | Line | Severity |'
+            echo '|---------|---------|------|------|----------|'
             jq -r '
               .runs[].results[] |
-              "| \(.ruleId) | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri) | \(.locations[0].physicalLocation.region.startLine) |"
+              "| \(.ruleId // "") | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri // "") | \(.locations[0].physicalLocation.region.startLine // "") | \(.level // "") |"
             ' semgrep-results.sarif
             echo ""
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
           fi
+
