@@ -1,4 +1,4 @@
-name: Semgrep PR Scan 
+name: Semgrep PR Scan + Reviewdog
 
 on:
   pull_request: {}
