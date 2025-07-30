@@ -92,7 +92,10 @@ jobs:
             echo "❌ Failing pipeline due to critical/error/warning-level findings"
             exit 1
           fi
-      
+          
+      - uses: reviewdog/action-setup@e04ffabe3898a0af8d0fb1af00c188831c4b5893
+        with:
+          reviewdog_version: latest
       - name: Run reviewdog
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
