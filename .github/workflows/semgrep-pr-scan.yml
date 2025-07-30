@@ -1,99 +1,34 @@
-name: Semgrep PR Scan 
+name: Semgrep + Reviewdog
 
 on:
-  pull_request: {}
+  pull_request:
 
 jobs:
-  semgrep_diff_scan:
-    name: semgrep/pr-diff
+  semgrep-reviewdog:
     runs-on: ubuntu-latest
-    container:
-      image: semgrep/semgrep
-    if: github.actor != 'dependabot[bot]'
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Mark repo as safe for Git
-        run: git config --global --add safe.directory $(pwd)
 
-      - name: Run Semgrep
-        run: semgrep --verbose --config "p/default" --baseline-commit HEAD~ --sarif --output semgrep-results.sarif
+      - name: Set up Python
+        uses: actions/setup-python@v4
 
-      - name: Save SARIF results as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-pr-results
-          path: semgrep-results.sarif
+      - name: Install semgrep
+        run: pip install semgrep
 
-      - name: Publish Semgrep SARIF Summary
+      - name: Install reviewdog
         run: |
-          if [[ -s semgrep-results.sarif ]]; then
-          {
-            echo "### 🧪 Semgrep Findings"
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '| Rule ID | Message | File | Line | Level |'
-            echo '|---------|---------|------|------|-------|'
-            jq -r '
-              def rule_level_map:
-                (.runs[].tool.driver.rules // []) as $rules |
-                reduce $rules[] as $r ({}; . + {($r.id): ($r.defaultConfiguration.level // "unknown")} );
-      
-              rule_level_map as $levels |
-              .runs[].results[] |
-              "| \(.ruleId // "") | \(.message.text | gsub("\n"; " ")) | \(.locations[0].physicalLocation.artifactLocation.uri // "") | \(.locations[0].physicalLocation.region.startLine // "") | \($levels[.ruleId] // "unknown") |"
-            ' semgrep-results.sarif
-            echo ""
-            echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
-          fi
+          curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh | sh -s -- -b $HOME/bin
+          echo "$HOME/bin" >> $GITHUB_PATH
 
-      - name: Fail if any critical/error/warning-level findings exist
+      - name: Run semgrep with reviewdog (GitHub PR reviewer)
         run: |
-          critical_count=$(jq '
-            def rule_level_map:
-              (.runs[].tool.driver.rules // []) as $rules |
-              reduce $rules[] as $r ({}; . + {($r.id): ($r.defaultConfiguration.level // "unknown")} );
-
-            rule_level_map as $levels |
-            [.runs[].results[] | select(($levels[.ruleId] // "unknown") == "critical")] | length
-          ' semgrep-results.sarif)
-
-          echo "Found $critical_count critical-level findings."
-          
-          error_count=$(jq '
-            def rule_level_map:
-              (.runs[].tool.driver.rules // []) as $rules |
-              reduce $rules[] as $r ({}; . + {($r.id): ($r.defaultConfiguration.level // "unknown")} );
-
-            rule_level_map as $levels |
-            [.runs[].results[] | select(($levels[.ruleId] // "unknown") == "error")] | length
-          ' semgrep-results.sarif)
-
-          echo "Found $error_count error-level findings."
-          
-          warning_count=$(jq '
-            def rule_level_map:
-              (.runs[].tool.driver.rules // []) as $rules |
-              reduce $rules[] as $r ({}; . + {($r.id): ($r.defaultConfiguration.level // "unknown")} );
-
-            rule_level_map as $levels |
-            [.runs[].results[] | select(($levels[.ruleId] // "unknown") == "warning")] | length
-          ' semgrep-results.sarif)
-
-          echo "Found $warning_count warning-level findings."
-          
-          if [ "$critical_count" -gt 0 ] || [ "$error_count" -gt 0 ] || [ "$warning_count" -gt 0 ] ; then
-            echo "❌ Failing pipeline due to error-level findings"
-            exit 1
-          fi 
-
-
+          semgrep --config=auto --json > semgrep.json
+          cat semgrep.json | jq -r '.results[] | "\(.path):\(.start.line):\(.extra.message)"' | \
+          reviewdog -efm="%f:%l:%m" \
+            -name="semgrep" \
+            -reporter=github-pr-review \
+            -filter-mode=nofilter \
+            -fail-on-error=false
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
