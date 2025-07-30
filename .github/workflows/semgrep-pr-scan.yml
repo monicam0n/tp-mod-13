@@ -1,7 +1,7 @@
 name: Semgrep PR Scan 
 
 on:
-  pull_request_target: {}
+  pull_request_target: 
 
 jobs:
   semgrep_diff_scan:
