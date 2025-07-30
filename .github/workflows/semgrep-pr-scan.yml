@@ -5,6 +5,7 @@ on:
     
 jobs:
   semgrep_diff_scan:
+
     name: semgrep/pr-diff
     runs-on: ubuntu-latest
     container:
@@ -14,6 +15,7 @@ jobs:
       security-events: write
       actions: read
       contents: read
+      pull-requests: write
 
     steps:
       - name: Checkout code
