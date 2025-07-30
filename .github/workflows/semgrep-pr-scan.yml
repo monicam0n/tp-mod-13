@@ -1,8 +1,9 @@
 name: Semgrep PR Scan 
 
 on:
-  pull_request_target: 
-
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled, ready_for_review]
+    
 jobs:
   semgrep_diff_scan:
     name: semgrep/pr-diff
